@@ -2,8 +2,8 @@
 import time
 from machine import Pin,I2C
 
-RGB1602_SDA = Pin(6)
-RGB1602_SCL = Pin(7)
+RGB1602_SDA = Pin(4)
+RGB1602_SCL = Pin(5)
 
 RGB1602_I2C = I2C(0,sda = RGB1602_SDA, scl = RGB1602_SCL ,freq = 400000)
 
