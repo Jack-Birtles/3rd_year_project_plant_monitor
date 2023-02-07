@@ -5,6 +5,7 @@
 # designed around the Raspberry Pi Pico W.
 
 from machine import Pin, I2C, ADC
+from network import WLAN, STA_IF
 from time import sleep
 # import RGB1602
 from EPD_2in66 import EPD
@@ -71,6 +72,34 @@ read_delay = 5        # read moisture every n seconds
 #         # battery type set incorrectly
 #         return 0
 
+def connect(network):
+    ssid = network["name"]
+    pswd = network["password"]
+
+    status_values = ["LINK_DOWN", "LINK_JOIN", "LINK_NOIP", "LINK_UP", 
+                     "LINK_FAIL", "LINK_NONET", "LINK_BADAUTH"]
+
+    wlan = WLAN(STA_IF)
+    wlan.active(True)
+    wlan.connect(ssid, pswd)
+
+    wait_time = 10
+    while wait_time > 0:
+        if 0 > wlan.status() >= 3:
+            break
+        wait_time -= 1
+        print("Connecting...")
+        sleep(1)
+
+    if wlan.status() != 3:
+        print(status_values[wlan.status()])
+        raise RuntimeError("network connection failed")
+    else:
+        print("connected")
+        print(status_values[wlan.status()])
+        status = wlan.ifconfig()
+        print("ip = " + status[0])
+
 def refreshEP():
     # epd.Clear(0xff) # 0xff is white, 0x00 black
     epd.fill(0xff)
@@ -95,6 +124,8 @@ def relativeChange(old_val, new_val):
 last_moisture_val = 0
 if usb_power:
     # initialise web page for remote sensor reading
+    # connect(network_details)
+    
     # enable neopixel stick to give clear indication if situation
     # is good or bad - maybe take all sensor values and have a continuum for the resulting colour?         
     while True:

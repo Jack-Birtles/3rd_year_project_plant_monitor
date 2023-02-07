@@ -8,3 +8,5 @@ while True:
     if usb_power:
         onboard_led.toggle()
         sleep(2)
+    else:
+        sleep(2)
