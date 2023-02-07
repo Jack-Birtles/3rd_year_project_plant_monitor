@@ -65,22 +65,27 @@ read_delay = 5        # read moisture every n seconds
 #         return 0
 
 def refreshEP():
-    epd.Clear(0xff) # 0xff is white, 0x00 black
-    # epd.fill(0xff)
-    # epd.display(epd.buffer)
-    epd.sleep()
+    # epd.Clear(0xff) # 0xff is white, 0x00 black
+    epd.fill(0xff)
+    epd.display(epd.buffer)
+    print("Refreshed")
+    # epd.sleep()
 
 def updateEP(value):
     refreshEP()
     epd.text("Moisture Level: ", 13, 10, 0x00)
     epd.text(value, 13, 40, 0x00)
     epd.display(epd.buffer)
-    epd.sleep()
+    # epd.sleep()
+    print("Updated")
     
+def relativeChange(old_val, new_val):
+    change = abs(((new_val - old_val) / old_val) * 100)
+    return round(change)
     
-refreshEP()
-updateEP("Initialising")
-sleep(2)
+# refreshEP()
+# sleep(2)
+last_moisture_val = 0
 if usb_power:
     # initialise web page for remote sensor reading
     # enable neopixel stick to give clear indication if situation
@@ -90,8 +95,11 @@ if usb_power:
         sensor_value = soil.read_u16()
         moisture = (const_air_val - sensor_value) * 100 / (const_air_val - const_water_val)
         print("moisture: " + "%.2f" % moisture +"% (adc: "+str(sensor_value)+")")
-        moisture_percent = "%.2f" % moisture +"%"
-        updateEP(moisture_percent)
+
+        if (last_moisture_val == 0) or (relativeChange(last_moisture_val, moisture) > 5):
+            moisture_percent = "%.2f" % moisture +"%"
+            updateEP(moisture_percent)
+            last_moisture_val = moisture
         # updateLCD(moisture_percent)
         
         sleep(read_delay)
