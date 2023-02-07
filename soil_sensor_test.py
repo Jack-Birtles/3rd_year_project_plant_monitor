@@ -31,6 +31,7 @@ setupLCD()
 sleep(2)
 while True:
     onboard_led.toggle()
+    print(soil.read_u16())
     moisture = (max_moisture-soil.read_u16())*100/(max_moisture-min_moisture)
     print("moisture: " + "%.2f" % moisture +"% (adc: "+str(soil.read_u16())+")")
     moisture_percent = "%.2f" % moisture +"%" 

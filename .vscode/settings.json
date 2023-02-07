@@ -6,10 +6,22 @@
     "python.languageServer": "Pylance",
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.extraPaths": [
-        ".vscode/Pico-W-Stub/stubs"
+        "",
+        "/home/jack/.vscode/extensions/joedevivo.vscode-circuitpython-0.1.19-linux-x64/stubs",
+        "/home/jack/.config/Code/User/globalStorage/joedevivo.vscode-circuitpython/bundle/20230206/adafruit-circuitpython-bundle-py-20230206/lib"
     ],
     "picowgo.syncFolder": "",
     "picowgo.openOnStart": true,
     "picowgo.ftpPassword": "pico",
-    "editor.mouseWheelZoom": false
+    "editor.mouseWheelZoom": false,
+    "cSpell.words": [
+        "Gdnxn",
+        "Neopixel",
+        "zgnd"
+    ],
+    "python.linting.pylintEnabled": false,
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingModuleSource": "none"
+    },
+    "circuitpython.board.version": null
 }

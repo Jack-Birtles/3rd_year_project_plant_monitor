@@ -1,4 +1,5 @@
-import array, time
+import array
+import time
 from machine import Pin
 import rp2
 
