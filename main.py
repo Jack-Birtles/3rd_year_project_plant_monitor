@@ -1,8 +1,15 @@
+# Jack Birtles
+# Last updated 07/02/23
+#
+# A system to monitor and water house plants
+# designed around the Raspberry Pi Pico W.
+
 from machine import Pin, I2C, ADC
 from time import sleep
 # import RGB1602
 from EPD_2in66 import EPD
 # from neopixel import Neopixel
+from settings import plant_details, network_details
 
 usb_power = Pin(24, Pin.IN)        # high if on usb power
 battery_type = "alkaline"          # either alakaline for 3 AA cells or lipo for lithium-ion
