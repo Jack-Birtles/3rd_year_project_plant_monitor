@@ -38,6 +38,15 @@ const_air_val = 51500
 const_water_val = 26600
 read_delay = 5        # read moisture every n seconds
 
+moisture_values = []
+temperature_values = []
+humidity_values = []
+light_values = []
+sensor_averages = {"moisture"    : "Initialising",
+                 "temperature" : "Initialising",
+                 "humidity"    : "Initialising",
+                 "light"       : "Initialising",}
+
 
 #   Calculates a rough value for the remaining battery percentage.
 #   Might be better just waiting till the battery voltage reaches 
@@ -97,12 +106,13 @@ def getWebpage(file):
             page = f.read()
     except Exception as e:
         print(e, "\nfile does not exist")
-        return False
+        raise e
 
     return page
 
 async def serveClient(reader, writer):
     page = getWebpage("production/index.html")
+
 
     print("client connected")
     request_line = await reader.readline()
@@ -111,24 +121,14 @@ async def serveClient(reader, writer):
     while await reader.readline() != b"\r\n":
         pass
 
-    request = str(request_line)
-    led_on = request.find("/light/on")
-    led_off = request.find("/light/off")
-    print("led on = ", str(led_on))
-    print("led off = ", str(led_off))
+    # request = str(request_line)
 
-    stateis = ""
-    if led_on == 6:
-        print("led on")
-        onboard_led.value(1)
-        stateis = "LED ON"
 
-    if led_off == 6:
-        print("led off")
-        onboard_led.value(0)
-        stateis = "LED OFF"
-
-    response = page % stateis
+    response = page
+    response = response.replace("moistureValue", sensor_averages["moisture"])
+    response = response.replace("temperatureValue", sensor_averages["temperature"])
+    response = response.replace("humidityValue", sensor_averages["humidity"])
+    response = response.replace("lightValue", sensor_averages["light"])
     writer.write("HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n")
     writer.write(response)
 
@@ -138,7 +138,6 @@ async def serveClient(reader, writer):
 
 async def main():
     connect(network_details)
-
     print("Setting up webserver")
     uasyncio.create_task(uasyncio.start_server(serveClient, "0.0.0.0", 80))
 
@@ -147,18 +146,19 @@ async def main():
         soil_value = soil.read_u16()
         moisture = round((const_air_val - soil_value) * 100 / (const_air_val - const_water_val), 1)
         print("moisture: " + "%.1f" % moisture +"% (adc: "+str(soil_value)+")")
+        updateSensorReadings()
 
         temperature_value = temp_humidity.temperature()
-        temperature = str(temperature_value) + u"\u2103"
-        print("temperature: " + temperature)
+        sensor_averages["temperature"] = str(temperature_value) + " Celsius"    #u"\u2103" for degrees C
+        print("temperature: " + sensor_averages["temperature"])
 
         humidity_value = temp_humidity.humidity()
-        humidity = str(humidity_value) + "%"
-        print("humidity: " + humidity)
+        sensor_averages["humidity"] = str(humidity_value) + "%"
+        print("humidity: " + sensor_averages["humidity"])
 
         if (last_moisture_val == 0) or (relativeChange(last_moisture_val, moisture) > 5):
-            moisture_percent = "%.2f" % moisture +"%"
-            updateEP(moisture_percent, temperature, humidity)
+            sensor_averages["moisture"] = "%.2f" % moisture +"%"
+            updateEP(sensor_averages["moisture"], sensor_averages["temperature"], sensor_averages["humidity"])
             last_moisture_val = moisture
         await uasyncio.sleep(read_delay)
 
@@ -184,6 +184,28 @@ def updateEP(moisture, temperature, humidity):
 def relativeChange(old_val, new_val):
     change = abs(((new_val - old_val) / old_val) * 100)
     return round(change)
+
+def updateSensorReadings():
+    soil_value = soil.read_u16()
+    moisture = round((const_air_val - soil_value) * 100 / (const_air_val - const_water_val), 1)
+    moisture_values, sensor_averages["moisture"] = calcRollingAverage(moisture, moisture_values)
+    print("moisture: " + "%.1f" % moisture +"%")
+
+    # temperature_value = temp_humidity.temperature()
+    # sensor_averages["temperature"] = str(temperature_value) + " Celsius"    #u"\u2103" for degrees C
+    # print("temperature: " + sensor_averages["temperature"])
+
+    # humidity_value = temp_humidity.humidity()
+    # sensor_averages["humidity"] = str(humidity_value) + "%"
+    # print("humidity: " + sensor_averages["humidity"])
+
+def calcRollingAverage(reading, value_list):
+    value_list.append(reading)
+    list_length = len(value_list)
+    if list_length == 11:
+        value_list.remove(0)
+    total = sum(value_list)
+    return value_list, str((total / list_length))
     
 
 last_moisture_val = 0
@@ -221,43 +243,3 @@ else:
         # machine.deepsleep([time_ms]
         # machine.lightsleep([time_ms]
         # - power saving, need to test which sleep is required
-    
-    
-    
-    
-
-# if __name__=='__main__':
-#     epd = EPD_2in66(152, 296, 12, 8, 9, 13)
-#     epd.Clear(0xff)
-    
-#     epd.fill(0xff)
-#     epd.text("Waveshare", 13, 10, 0x00)
-#     epd.text("Pico_ePaper-2.66", 13, 40, 0x00)
-#     epd.text("Raspberry Pico", 13, 70, 0x00)
-#     epd.display(epd.buffer)
-#     utime.sleep_ms(2000)
-    
-#     epd.vline(10, 90, 60, 0x00)
-#     epd.vline(140, 90, 60, 0x00)
-#     epd.hline(10, 90, 130, 0x00)
-#     epd.hline(10, 150, 130, 0x00)
-#     epd.line(10, 90, 140, 150, 0x00)
-#     epd.line(140, 90, 10, 150, 0x00)
-#     epd.display(epd.buffer)
-#     utime.sleep_ms(2000)
-    
-#     epd.rect(10, 180, 60, 80, 0x00)
-#     epd.fill_rect(80, 180, 60, 80, 0x00)
-#     utime.sleep_ms(2000)
-    
-#     epd.init(1)
-#     for i in range(0, 10):
-#         epd.fill_rect(52, 270, 40, 20, 0xff)
-#         epd.text(str(i), 72, 270, 0x00)
-#         epd.display(epd.buffer)
-
-#     epd.init(0)
-#     epd.Clear(0xff)
-#     utime.sleep_ms(2000)
-#     print("sleep")
-#     epd.sleep()
