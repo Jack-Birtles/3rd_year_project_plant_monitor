@@ -188,7 +188,8 @@ def relativeChange(old_val, new_val):
 def updateSensorReadings():
     soil_value = soil.read_u16()
     moisture = round((const_air_val - soil_value) * 100 / (const_air_val - const_water_val), 1)
-    moisture_values, sensor_averages["moisture"] = calcRollingAverage(moisture, moisture_values)
+    new_moisture_values, sensor_averages["moisture"] = calcRollingAverage(moisture, moisture_values)
+    moisture_values = new_moisture_values
     print("moisture: " + "%.1f" % moisture +"%")
 
     # temperature_value = temp_humidity.temperature()
