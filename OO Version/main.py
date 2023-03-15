@@ -1,30 +1,37 @@
-from time import sleep
-from machine import Pin, PWM, ADC, I2C, Timer, lightsleep
+# Jack Birtles
+# Last updated 15/03/23
+#
+# Contains the main logic for a plant monitoring system
+
+from time import sleep, sleep_ms
+from machine import Pin, ADC, Timer, lightsleep
 
 from wateringsystem import WateringSystem
 
 from EPD_2in66 import EPD
 from ws2812b import Neopixel_Controller
 
+from settings import plant_details, network_details
+
 watering_system = WateringSystem()
 epaper = EPD(152, 296, 12, 8, 9, 13)
 neopixel_stick = Neopixel_Controller(16, 8)
 usb_power = Pin(24, Pin.IN)        # high if on usb power
 battery_voltage = ADC(27)
-
+button = Pin(6, Pin.IN, Pin.PULL_DOWN)
 timer = Timer(-1)
-watering_threshold = 40
+
+sleep_duration = int(plant_details["update_time"])
+watering_threshold = int(plant_details["minimum_moisture_percentage"])
 disable_watering_flag = False
 low_battery_threshold = 3.75
 low_battery_flag = False
 
 
 def refreshEP():
-    # epd.Clear(0xff) # 0xff is white, 0x00 black
     epaper.fill(0xff)
     epaper.display(epaper.buffer)
     print("Refreshed")
-    # epd.sleep()
 
 
 def updateEP(moisture, temperature, humidity):
@@ -36,7 +43,6 @@ def updateEP(moisture, temperature, humidity):
     epaper.text("Humidity Level: ", 13, 130, 0x00)
     epaper.text(str(humidity), 13, 160, 0x00)
     epaper.display(epaper.buffer)
-    # epd.sleep()
     print("Updated")
 
 
@@ -46,8 +52,21 @@ def enable_watering():
     print("watering now enabled")
 
 
-def low_power_warning():
-    pass
+def watering_interrupt(button, watering_system):
+    button.irq(trigger=0)
+    debounce =  0
+    while debounce < 3:
+        sleep_ms(100)
+        if button.value() == 1:
+            debounce += 1
+        else:
+            button.irq(trigger=Pin.IRQ_RISING, handler=watering_interrupt)
+            break
+
+    watering_system.enable_waterpump()
+    while button.value() == 1:
+        sleep(1)
+    watering_system.disable_waterpump()
 
 
 def get_battery_voltage() -> float:
@@ -56,6 +75,7 @@ def get_battery_voltage() -> float:
     return voltage
 
 
+button.irq(trigger=Pin.IRQ_RISING, handler=lambda t: watering_interrupt(button, watering_system))
 while True:
     watering_system.read_sensors()
     refreshEP()
@@ -69,7 +89,10 @@ while True:
             sleep(10)
             watering_system.disable_waterpump()
             sleep(1)
-        neopixel_stick.fill((0, 0, 0), 0.05)
+        if low_battery_flag:
+            neopixel_stick.fill((255, 0, 0), 0.05)
+        else:
+            neopixel_stick.fill((0, 0, 0), 0.05)
         disable_watering_flag = True
         print("watering finished", disable_watering_flag)
         timer.init(period=900000, mode=Timer.ONE_SHOT,
@@ -83,7 +106,7 @@ while True:
                 neopixel_stick.fill((255, 0, 0), 0.05)
 
     print("sleeping")
-    sleep(60)
+    sleep(sleep_duration)
     # for i in range(1000):
     #     lightsleep(2)
     # sleep(1)

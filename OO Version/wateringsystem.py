@@ -1,3 +1,9 @@
+# Jack Birtles
+# Last updated 15/03/23
+#
+# Contains driver code for controlling a peristaltic pump,
+# capacitive moisture sensor and AM2320 sensor.
+
 from machine import Pin, PWM, ADC, I2C
 from time import sleep
 
@@ -13,8 +19,6 @@ class WateringSystem:
     """
 
     def __init__(self) -> None:
-        self.onboard_led = Pin("LED", Pin.OUT)
-        self.button = Pin(6, Pin.IN, Pin.PULL_DOWN)
         self.pump = PWM(Pin(5))
         self.pump.freq(50)
         self.soil = ADC(Pin(26))
@@ -51,7 +55,7 @@ class WateringSystem:
 
     def update_average(self, values, is_moisture):
         average = 0
-        for i,j in enumerate(values):
+        for i, j in enumerate(values):
             average = average + (j * weights[i])
 
         if is_moisture:
@@ -62,7 +66,7 @@ class WateringSystem:
     def watering_cycle(self):
         self.onboard_led.high()
         self.pump.duty_u16(1000)
-        sleep(30)
+        sleep(60)
         self.pump.duty_u16(0)
 
     def enable_waterpump(self):
@@ -71,4 +75,4 @@ class WateringSystem:
 
     def disable_waterpump(self):
         self.onboard_led.high()
-        self.pump.duty_u16(0)    
+        self.pump.duty_u16(0)
