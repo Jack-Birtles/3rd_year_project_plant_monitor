@@ -43,9 +43,9 @@ temperature_values = []
 humidity_values = []
 light_values = []
 sensor_averages = {"moisture"    : "Initialising",
-                 "temperature" : "Initialising",
-                 "humidity"    : "Initialising",
-                 "light"       : "Initialising",}
+                   "temperature" : "Initialising",
+                   "humidity"    : "Initialising",
+                   "light"       : "Initialising", }
 
 
 #   Calculates a rough value for the remaining battery percentage.
