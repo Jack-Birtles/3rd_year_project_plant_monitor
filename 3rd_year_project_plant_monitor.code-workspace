@@ -13,7 +13,7 @@
 		"python.analysis.extraPaths": [
 			"",
 			"/home/jack/.vscode/extensions/joedevivo.vscode-circuitpython-0.1.20-linux-x64/stubs",
-			"/home/jack/.config/Code/User/globalStorage/joedevivo.vscode-circuitpython/bundle/20230315/adafruit-circuitpython-bundle-py-20230315/lib"
+			"/home/jack/.config/Code/User/globalStorage/joedevivo.vscode-circuitpython/bundle/20230318/adafruit-circuitpython-bundle-py-20230318/lib"
 		],
 		"circuitpython.board.version": null,
 		"cSpell.words": [

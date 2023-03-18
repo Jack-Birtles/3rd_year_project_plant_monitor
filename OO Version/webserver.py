@@ -1,17 +1,20 @@
 from network import WLAN, STA_IF
+from time import sleep
+import uasyncio
 
 
-class webserver:
+class webServer:
     """_summary_
     """
-    
+
     def __init__(self, network) -> None:
         self.ssid = network["name"]
         self.password = network["password"]
+        self.ip = ""
 
     def connect(self) -> bool:
-        status_values = ["LINK_DOWN", "LINK_JOIN", "LINK_NOIP", "LINK_UP",
-                        "LINK_FAIL", "LINK_NONET", "LINK_BADAUTH"]
+        status_values = ["DOWN", "JOIN", "NOIP", "UP",
+                         "FAIL", "NONET", "BADAUTH"]
 
         wlan = WLAN(STA_IF)
         wlan.active(True)
@@ -22,7 +25,7 @@ class webserver:
             if 0 > wlan.status() >= 3:
                 break
             wait_time -= 1
-            print("Connecting...")
+            print("connecting")
             sleep(1)
 
         if wlan.status() != 3:
@@ -33,11 +36,12 @@ class webserver:
         print("connected")
         print(status_values[wlan.status()])
         status = wlan.ifconfig()
-        print("ip = " + status[0])
-        
+        self.ip = status[0]
+        print("ip = " + self.ip)
+
         return True
 
-    def getWebpage(file):
+    def getWebpage(self, file):
         try:
             with open(file, "r") as f:
                 page = f.read()
@@ -47,9 +51,8 @@ class webserver:
 
         return page
 
-    def serveClient(reader, writer):
-        page = getWebpage("index.html")
-
+    async def serveClient(self, reader, writer):
+        page = self.getWebpage("index.html")
 
         print("client connected")
         request_line = await reader.readline()
@@ -59,8 +62,6 @@ class webserver:
             pass
 
         # request = str(request_line)
-
-
         response = page
         response = response.replace("moistureValue", sensor_averages["moisture"])
         response = response.replace("temperatureValue", sensor_averages["temperature"])
