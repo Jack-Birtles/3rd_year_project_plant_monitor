@@ -11,7 +11,7 @@ from wateringsystem import WateringSystem
 
 from EPD_2in66 import EPD
 from ws2812b import Neopixel_Controller
-from webserver import webServer
+from networkhelper import networkHelper
 
 from settings import plant_details, network_details
 
@@ -55,6 +55,14 @@ def enable_watering():
     print("watering now enabled")
 
 
+def disable_watering():
+    global disable_watering_flag
+    disable_watering_flag = True
+    timer.init(period=900000, mode=Timer.ONE_SHOT,
+               callback=lambda t: enable_watering())
+    print("watering now disabled")
+
+
 def watering_interrupt(button, watering_system):
     button.irq(trigger=0)
     sleep_ms(300)
@@ -73,9 +81,10 @@ def get_battery_voltage() -> float:
 
 
 async def main():
+    # global disable_watering_flag
     if usb_power_flag:
-        web_server.connect()
-
+        connection.connect()
+        uasyncio.create_task(uasyncio.start_server(serveClient, "0.0.0.0", 80))
 
     while True:
         watering_system.read_sensors()
@@ -86,21 +95,15 @@ async def main():
 
         if (watering_system.moisture_average < watering_threshold) and (not disable_watering_flag):
             neopixel_stick.fill((255, 0, 0), 0.05)
-            for i in range(1):
-                watering_system.enable_waterpump()
-                sleep(10)
-                watering_system.disable_waterpump()
-                sleep(1)
+            watering_system.watering_cycle()
             if low_battery_flag:
                 neopixel_stick.fill((255, 0, 0), 0.05)
             else:
                 neopixel_stick.fill((0, 0, 0), 0.05)
-            disable_watering_flag = True
+            disable_watering()
             print("watering finished", disable_watering_flag)
-            timer.init(period=900000, mode=Timer.ONE_SHOT,
-                    callback=lambda t: enable_watering())
-
-        if usb_power.value() == 0:
+            
+        if not usb_power_flag:
             if not low_battery_flag:
                 voltage = get_battery_voltage()
                 if voltage < low_battery_threshold:
@@ -115,9 +118,41 @@ async def main():
         print("awake")
 
 
+async def serveClient(reader, writer):
+    page = connection.getWebpage("index.html")
+
+    print("client connected")
+    request_line = await reader.readline()
+    print("request: ", request_line)
+
+    while await reader.readline() != b"\r\n":
+        pass
+
+    request = str(request_line)
+    response = page
+    response = response.replace(
+        "moistureValue", watering_system.moisture_average)
+    response = response.replace(
+        "temperatureValue", watering_system.temp_average)
+    response = response.replace(
+        "humidityValue", watering_system.humidity_average)
+    # response = response.replace("lightValue", watering_system.light_average)
+    response = response.replace(
+        "thresholdValue", watering_threshold)
+    watering_on = request.find("/?water=on")
+    if watering_on == 6:
+        watering_system.watering_cycle()
+        disable_watering()
+    writer.write("HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n")
+    writer.write(response)
+
+    await writer.drain()
+    await writer.wait_closed()
+    print("client disconnecting")
 
 
-web_server = webServer(network_details)
-button.irq(trigger=Pin.IRQ_RISING, handler=lambda t: watering_interrupt(button, watering_system))
+connection = networkHelper(network_details)
+button.irq(trigger=Pin.IRQ_RISING,
+           handler=lambda t: watering_interrupt(button, watering_system))
 uasyncio.run(main())
-uasyncio.new_event_loop()
+# uasyncio.new_event_loop()

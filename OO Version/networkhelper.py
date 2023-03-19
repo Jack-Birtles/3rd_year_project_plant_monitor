@@ -3,7 +3,7 @@ from time import sleep
 import uasyncio
 
 
-class webServer:
+class networkHelper
     """_summary_
     """
 
@@ -50,26 +50,3 @@ class webServer:
             raise e
 
         return page
-
-    async def serveClient(self, reader, writer):
-        page = self.getWebpage("index.html")
-
-        print("client connected")
-        request_line = await reader.readline()
-        print("request: ", request_line)
-
-        while await reader.readline() != b"\r\n":
-            pass
-
-        # request = str(request_line)
-        response = page
-        response = response.replace("moistureValue", sensor_averages["moisture"])
-        response = response.replace("temperatureValue", sensor_averages["temperature"])
-        response = response.replace("humidityValue", sensor_averages["humidity"])
-        response = response.replace("lightValue", sensor_averages["light"])
-        writer.write("HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n")
-        writer.write(response)
-
-        await writer.drain()
-        await writer.wait_closed()
-        print("client disconnecting")
