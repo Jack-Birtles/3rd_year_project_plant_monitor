@@ -1,20 +1,17 @@
 # Jack Birtles
-# Last updated 07/02/23
+# Last updated 15/03/23
 #
-# This file contains all the user settings.
-# Currently only editable through a text editor - maybe add web setup?
+# Contains user settings.
 
 network_details = {
-    "name" : "VM3345192",
-    "password" : "zgnd5RvGdnxn",
+    "name": "VM3345192",
+    "password": "zgnd5RvGdnxn",
     }
 
-plant_details = {
-    "name" : "Give your plant a name here",
+system_settings = {
     # Minimum moisture percentage is the point at which automatic
     # watering will begin.
-    "minimum_moisture_percentage" : "20",
-    # Maximum moisture percentage is the point at which automatic
-    # watering will stop.
-    "maximum_moisture_percentage" : "70",
+    "minimum_moisture_percentage": 30,
+    # Time in seconds between sensor readings.
+    "update_time": 60,
 }

@@ -4,6 +4,7 @@ from machine import Pin
 from rp2 import asm_pio, StateMachine, PIO
 
 
+# PIO state machine for RGB. Pulls 24 bits (rgb -> 3 * 8bit) automatically
 @asm_pio(sideset_init=PIO.OUT_LOW, out_shiftdir=PIO.SHIFT_LEFT, autopull=True, pull_thresh=24)
 def ws2812():
     T1 = 2
@@ -26,7 +27,7 @@ class Neopixel_Controller:
         self.state_machine = StateMachine(0, ws2812, freq=8000000, sideset_base=Pin(pin))
         self.state_machine.active(1)
 
-    def fill(self, color, brightness):
+    def pixels_fill(self, color, brightness):
         dimmer_ar = array.array("I", [0 for _ in range(self.led_count)])
 
         for i in range(self.led_count):

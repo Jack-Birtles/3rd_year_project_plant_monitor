@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Plant Station</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta http-equiv="refresh" content="5">
+        <link rel="icon" href="data:,">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.3.0/css/all.css">
+        <style>
+            html {font-family: Arial; display: inline-block; text-align: center;}
+            body {
+                  max-width: 600px;
+                  margin:0px auto;
+                  padding-bottom: 25px;
+                  color: #141b1e;
+                  background-color: #ffffff;}
+            nav {
+                overflow: hidden;
+                background-color: #141b1e;
+                padding: 20px;
+              }
+            nav a {
+                color: #dadada;
+                text-align: center;
+                margin: 20px;
+                text-decoration: none;
+                font-size: 1.5rem;
+              }
+            nav a:hover {
+                background-color: #232a2d;
+                color: #dadada;
+                font-size: 1.3rem;
+                padding: 16px;
+              }
+            section {
+                height: 1000px;
+              }
+            h2 {font-size: 3.0rem;}
+            p {font-size: 2.0rem;}
+            button {
+                background-color: #141b1e; /* Green */
+                border: none;
+                color: #dadada;
+                padding: 10px;
+                text-align: center;
+                display: inline-block;
+                font-size: 2rem;
+              }
+            button:hover {
+                background-color: #67b0e8; /* Green */
+                color: #141b1e;
+              }
+            label {font-size: 2.0rem;}
+            input {
+                font-size: 2.0rem;
+                width:  30%;
+                padding: 15px 32px;
+                box-sizing: border-box;
+                border: 2px solid #232a2d;
+                background-color: #f8f8f8;
+                resize: none;
+              }
+            input[type=text] {
+                font-size: 1rem;
+              }
+            input[type=submit] {
+                background-color: #141b1e; /* Green */
+                border: none;
+                color: #dadada;
+                padding: 15px 32px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 2rem;
+              }
+            input[type=submit]:hover {
+                background-color: #67b0e8; /* Green */
+                color: #141b1e;
+              }
+            .fa-droplet{color:#67b0e8;}
+            .fa-thermometer-half{color:#e57474;}
+            .fa-wind{color:#8ccf7e;}
+            .fa-sun{color:#e5c76b;}
+        </style>
+    </head>
+
+    <nav>
+        <a href="#dashboard">Dashboard</a>
+        <a href="#actions">Actions</a>
+        <a href="#settings">Settings</a>
+    </nav>
+
+    <body>
+
+        <section id="dashboard">
+            <h2> 
+                <i class="fa-solid fa-droplet"></i> Moisture Level:
+            </h2>
+            <p>moistureValue</p>
+            <h2>
+                <i class="fas fa-thermometer-half"></i> Temperature:
+            </h2>
+            <p>temperatureValue</p>
+            <h2>
+                <i class="fa-solid fa-wind"></i> Humidity:
+            </h2>
+            <p>humidityValue</p>
+            <h2>
+                <i class="fa-solid fa-sun"></i> Light Level:
+            </h2>
+            <p>lightValue</p>
+        </section>
+
+        <section id="actions">
+            <h2>Watering Control</h2>
+            <a href="/?water=on"><button class="button">Water Now</button></a>
+        </section>
+
+        <section id="settings">
+            <h2>Settings</h2>
+            <form action="/action_page.php">
+                <label for="fname">Watering Threshold:</label><br>
+                <input type="text" id="fname" name="fname" value="thresholdValue"><br>
+                <input type="submit" value="Submit">
+            </form>
+        </section>
+    </body>
+
+</html>

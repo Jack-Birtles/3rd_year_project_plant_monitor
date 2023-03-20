@@ -55,7 +55,7 @@ class AM2320:
                 else:
                     crc >>= 1
         return crc
-
+            
     # get measured temperature in celsius        
     def temperature(self) -> float:
         raw_value = self._read_register(temp_reg)
@@ -63,9 +63,12 @@ class AM2320:
         if temperature >= 32768:
             temperature = -temperature
         return temperature / 10
-
+    
     # get measured humidity in percent
     def humidity(self) -> float:
         raw_value = self._read_register(hum_reg)
         humidity = ustruct.unpack(">H", raw_value)[0]
         return humidity / 10    
+                    
+    
+                
