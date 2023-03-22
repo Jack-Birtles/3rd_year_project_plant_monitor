@@ -4,8 +4,9 @@
 # Contains driver code for controlling a peristaltic pump,
 # capacitive moisture sensor and AM2320 sensor.
 
-from machine import Pin, PWM, ADC, I2C
 from time import sleep
+
+from machine import ADC, I2C, PWM, Pin
 
 from am2320 import AM2320
 

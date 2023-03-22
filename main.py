@@ -3,23 +3,54 @@
 #
 # Contains the main logic for a plant monitoring system
 
-from time import sleep, sleep_ms
-from machine import Pin, ADC, Timer, lightsleep
-from array import array
 from re import search
+from time import sleep, sleep_ms
+
 import uasyncio
 import ujson
-
-from wateringsystem import WateringSystem
+from machine import ADC, Pin, Timer, lightsleep
 
 from EPD_2in66 import EPD
-from ws2812b import Neopixel_Controller
 from networkhelper import networkHelper
+from wateringsystem import WateringSystem
+from ws2812b import Neopixel_Controller
 
 
 class main:
+    """
+    A class to control general functionality of the plant monitor.
 
-    def __init__(self) -> None:
+    Attributes:
+        sleep_duration (int): time to sleep between updates
+        watering_threshold (int): moisture level to begin watering
+        connection (networkHelper): network controller
+        watering_system (WateringSystem): sensor and pump controller
+        epaper (EPD): epaper controller
+        neopixel_stick (Neopixel_Controller): neopixel controller
+        power_source (Pin): battery indicator
+        usb_power_flag (bool): current power source (True with USB power)
+        battery_voltage (ADC): pin location of the halved battery voltage
+        button (Pin): pin location of the watering button
+        timer (Timer): software timer instance
+        manual_watering_flag (bool): indicator of current manual pump usage
+        disable_watering_flag (bool): indicator of recent watering
+        low_battery_threshold (float): voltage to trigger low battery warning
+        low_battery_flag (bool): indicator that low battery is acknowledged
+
+    Methods:
+        get_settings: extract user settings from config.json
+        change_settings: save new settings to config.json
+        refreshEP: clear and refresh the epaper display
+        updateEP: update the sensor values on the epaper display
+        enable_watering: allow watering after time limit has passed
+        disable_watering: disable watering for a period to allow the soil to soak up moisture
+        watering_interrupt: handler for the watering interrupt
+        get_battery_voltage: read and calculate the current battery voltage
+        serveClient: receive and respond to a html request
+        main: main asynchronous logic
+    """
+
+    def __init__(self):
         settings = self.get_settings()
         network_details = {
             "name": settings["name"],
@@ -107,49 +138,7 @@ class main:
         raw_value = self.battery_voltage.read_u16()
         voltage = (raw_value * (3.3 / 65536)) * 2
         return voltage
-
-    async def main(self):
-        connection_status = ""
-        if self.usb_power_flag == 0:
-            self.connection.connect()
-            connection_status = self.connection.get_ip()
-            uasyncio.create_task(uasyncio.start_server(
-                self.serveClient, "0.0.0.0", 80))
-
-        while True:
-            self.watering_system.read_sensors()
-            self.refreshEP()
-            self.updateEP(round(self.watering_system.moisture_average, 1),
-                          round(self.watering_system.temp_average, 1),
-                          round(self.watering_system.humidity_average, 1),
-                          connection_status)
-
-            if (self.watering_system.moisture_average < self.watering_threshold) and (not self.disable_watering_flag):
-                self.neopixel_stick.fill((255, 0, 0), 0.05)
-                self.watering_system.watering_cycle()
-                if self.low_battery_flag:
-                    self.neopixel_stick.fill((255, 0, 0), 0.05)
-                else:
-                    self.neopixel_stick.fill((0, 0, 0), 0.05)
-                self.disable_watering()
-                print("watering finished", self.disable_watering_flag)
-
-            if not self.usb_power_flag:
-                if not self.low_battery_flag:
-                    voltage = self.get_battery_voltage()
-                    if voltage < self.low_battery_threshold:
-                        self.low_battery_flag = True
-                        self.neopixel_stick.fill((255, 0, 0), 0.05)
-
-            print("sleeping")
-            if self.usb_power_flag == 0:
-                await uasyncio.sleep(self.sleep_duration)
-            else:
-                sleep(self.sleep_duration)
-            # for i in range(1000):
-            #     lightsleep(2)
-            # sleep(1)
-
+    
     async def serveClient(self, reader, writer):
         page = self.connection.get_webpage("index.html")
 
@@ -198,6 +187,48 @@ class main:
         await writer.drain()
         await writer.wait_closed()
         print("client disconnecting")
+
+    async def main(self):
+        connection_status = ""
+        if self.usb_power_flag == 0:
+            self.connection.connect()
+            connection_status = self.connection.get_ip()
+            uasyncio.create_task(uasyncio.start_server(
+                self.serveClient, "0.0.0.0", 80))
+
+        while True:
+            self.watering_system.read_sensors()
+            self.refreshEP()
+            self.updateEP(round(self.watering_system.moisture_average, 1),
+                          round(self.watering_system.temp_average, 1),
+                          round(self.watering_system.humidity_average, 1),
+                          connection_status)
+
+            if (self.watering_system.moisture_average < self.watering_threshold) and (not self.disable_watering_flag):
+                self.neopixel_stick.fill((255, 0, 0), 0.05)
+                self.watering_system.watering_cycle()
+                if self.low_battery_flag:
+                    self.neopixel_stick.fill((255, 0, 0), 0.05)
+                else:
+                    self.neopixel_stick.fill((0, 0, 0), 0.05)
+                self.disable_watering()
+                print("watering finished", self.disable_watering_flag)
+
+            if not self.usb_power_flag:
+                if not self.low_battery_flag:
+                    voltage = self.get_battery_voltage()
+                    if voltage < self.low_battery_threshold:
+                        self.low_battery_flag = True
+                        self.neopixel_stick.fill((255, 0, 0), 0.05)
+
+            print("sleeping")
+            if self.usb_power_flag == 0:
+                await uasyncio.sleep(self.sleep_duration)
+            else:
+                sleep(self.sleep_duration)
+            # for i in range(1000):
+            #     lightsleep(2)
+            # sleep(1)
 
 
 main_instance = main()
