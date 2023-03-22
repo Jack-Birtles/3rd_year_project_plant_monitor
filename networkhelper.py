@@ -30,6 +30,7 @@ class networkHelper:
 
         if wlan.status() != 3:
             print(status_values[wlan.status()])
+            self.ip = status_values[wlan.status()]
             # raise RuntimeError("network connection failed")
             return False
 
@@ -41,7 +42,10 @@ class networkHelper:
 
         return True
 
-    def getWebpage(self, file):
+    def get_ip(self):
+        return self.ip
+
+    def get_webpage(self, file):
         try:
             with open(file, "r") as f:
                 page = f.read()

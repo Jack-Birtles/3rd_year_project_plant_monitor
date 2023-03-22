@@ -11,7 +11,8 @@ from am2320 import AM2320
 
 const_air_val = 51500
 const_water_val = 26600
-weights = [0.025, 0.1, 0.175, 0.2, 0.5]
+weights = [[1], [0.2, 0.8], [0.1, 0.2, 0.7], [0.05, 0.125, 0.225, 0.6],
+           [0.025, 0.1, 0.175, 0.2, 0.5]]
 
 
 class WateringSystem:
@@ -56,7 +57,7 @@ class WateringSystem:
     def update_average(self, values, is_moisture):
         average = 0
         for i, j in enumerate(values):
-            average = average + (j * weights[i])
+            average = average + (j * weights[len(values) - 1][i])
 
         if is_moisture:
             average = round((const_air_val - average) * 100 /
@@ -64,15 +65,13 @@ class WateringSystem:
         return average
 
     def watering_cycle(self):
-        self.onboard_led.high()
         self.pump.duty_u16(1000)
-        sleep(60)
+        # sleep(60)
+        sleep(10)
         self.pump.duty_u16(0)
 
     def enable_waterpump(self):
-        self.onboard_led.high()
         self.pump.duty_u16(1000)
 
     def disable_waterpump(self):
-        self.onboard_led.high()
         self.pump.duty_u16(0)
