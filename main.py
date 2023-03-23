@@ -18,7 +18,7 @@ from ws2812b import Neopixel_Controller
 
 class main:
     """
-    A class to control general functionality of the plant monitor.
+    A class to control general functionality of the plant monitor
 
     Attributes:
         sleep_duration (int): time to sleep between updates
@@ -77,12 +77,25 @@ class main:
                         handler=lambda t: self.watering_interrupt(self.button))
 
     def get_settings(self) -> dict:
+        """Retrieves user settings from config.json
+
+        Returns:
+            settings converted to dictionary format
+        """
         file = open("config.json", "r")
         settings = ujson.loads(file.read())
         file.close()
         return settings
 
     def change_settings(self, new_sleep_duration, new_watering_threshold):
+        """Saves new settings values to the config file
+
+        Args:
+            new_sleep_duration (int): updated value for time
+                                      to sleep between updates
+            new_watering_threshold (int): updated value for the level
+                                          to begin automatic watering
+        """
         file = open("config.json", "r")
         file_data = ujson.loads(file.read())
         file_data["update_time"] = new_sleep_duration
@@ -95,11 +108,22 @@ class main:
         self.watering_threshold = int(new_watering_threshold)
 
     def refreshEP(self):
+        """Clear the epaper and empty the buffer
+        """
         self.epaper.fill(0xff)
         self.epaper.display(self.epaper.buffer)
         print("Refreshed")
 
     def updateEP(self, moisture, temperature, humidity, connection=""):
+        """Update the sensor values and connection status shown on the display
+
+        Args:
+            moisture (float): moisture level
+            temperature (float): temperature in Celsius
+            humidity (float): relative humidity
+            connection (str, optional): connection status, only included if
+                                        on mains power. Defaults to "".
+        """
         self.refreshEP()
         self.epaper.text("Moisture Level (%): ", 2, 10, 0x00)
         self.epaper.text(str(moisture), 2, 40, 0x00)
@@ -138,7 +162,7 @@ class main:
         raw_value = self.battery_voltage.read_u16()
         voltage = (raw_value * (3.3 / 65536)) * 2
         return voltage
-    
+
     async def serveClient(self, reader, writer):
         page = self.connection.get_webpage("index.html")
 
