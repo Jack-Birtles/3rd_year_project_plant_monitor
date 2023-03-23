@@ -1,5 +1,5 @@
 # Jack Birtles
-# Last updated 15/03/23
+# Last updated 23/03/23
 #
 # Contains driver code for controlling a peristaltic pump,
 # capacitive moisture sensor and AM2320 sensor.
@@ -17,7 +17,20 @@ weights = [[1], [0.2, 0.8], [0.1, 0.2, 0.7], [0.05, 0.125, 0.225, 0.6],
 
 
 class WateringSystem:
-    """_summary_
+    """
+    Controls a peristaltic pump, capacitive moisture sensor and an
+    AM2320 temperature and humidity sensor
+
+    Attributes:
+        pump (PWM): PWM object to control the pump
+        soil (ADC): ADC source of the moisture sensor
+        temp_humidity (AM2320): Driver for the AM2320 sensor
+        moisture_values (List): last 5 moisture readings
+        moisture_average (int): weighted average calculated from the above list
+        temp_values (List): last 5 temperature readings
+        temp_average (int): weighted average calculated from the above list
+        humidity_values (List): last 5 humidity readings
+        humidity_average (int): weighted average calculated from the above list
     """
 
     def __init__(self) -> None:

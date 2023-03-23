@@ -1,5 +1,5 @@
 # Jack Birtles
-# Last updated 15/03/23
+# Last updated 23/03/23
 #
 # Contains the main logic for a plant monitoring system
 
@@ -37,17 +37,6 @@ class main:
         low_battery_threshold (float): voltage to trigger low battery warning
         low_battery_flag (bool): indicator that low battery is acknowledged
 
-    Methods:
-        get_settings: extract user settings from config.json
-        change_settings: save new settings to config.json
-        refreshEP: clear and refresh the epaper display
-        updateEP: update the sensor values on the epaper display
-        enable_watering: allow watering after time limit has passed
-        disable_watering: disable watering for a period to allow the soil to soak up moisture
-        watering_interrupt: handler for the watering interrupt
-        get_battery_voltage: read and calculate the current battery voltage
-        serveClient: receive and respond to a html request
-        main: main asynchronous logic
     """
 
     def __init__(self):
@@ -82,6 +71,7 @@ class main:
         Returns:
             settings converted to dictionary format
         """
+
         file = open("config.json", "r")
         settings = ujson.loads(file.read())
         file.close()
@@ -96,6 +86,7 @@ class main:
             new_watering_threshold (int): updated value for the level
                                           to begin automatic watering
         """
+
         file = open("config.json", "r")
         file_data = ujson.loads(file.read())
         file_data["update_time"] = new_sleep_duration
@@ -110,9 +101,9 @@ class main:
     def refreshEP(self):
         """Clear the epaper and empty the buffer
         """
+
         self.epaper.fill(0xff)
         self.epaper.display(self.epaper.buffer)
-        print("Refreshed")
 
     def updateEP(self, moisture, temperature, humidity, connection=""):
         """Update the sensor values and connection status shown on the display
@@ -124,6 +115,7 @@ class main:
             connection (str, optional): connection status, only included if
                                         on mains power. Defaults to "".
         """
+
         self.refreshEP()
         self.epaper.text("Moisture Level (%): ", 2, 10, 0x00)
         self.epaper.text(str(moisture), 2, 40, 0x00)
@@ -131,25 +123,40 @@ class main:
         self.epaper.text(str(temperature), 2, 100, 0x00)
         self.epaper.text("Humidity Level (%): ", 2, 130, 0x00)
         self.epaper.text(str(humidity), 2, 160, 0x00)
+
         if connection != "":
             self.epaper.text("Connection Status: ", 2, 190, 0x00)
             self.epaper.text(connection, 2, 220, 0x00)
         self.epaper.display(self.epaper.buffer)
-        print("Updated")
 
     def enable_watering(self):
+        """Changes the state of the watering flag
+        """
+
         self.disable_watering_flag = False
-        print("watering now enabled")
+        print("Watering enabled")
 
     def disable_watering(self):
+        """Changes the state of the watering flag and sets a timer to enable it in 15 minutes
+        """
+
         self.disable_watering_flag = True
         self.timer.init(period=900000, mode=Timer.ONE_SHOT,
                         callback=lambda t: self.enable_watering())
-        print("watering now disabled")
+        print("Watering disabled")
 
     def watering_interrupt(self, button):
+        """Handler for manual watering. Pump stays on while button is held
+
+        Args:
+            button (Pin): GPIO pin connected to a button
+        """
+
+        # Disable interrupt to stop multiple triggers
         button.irq(trigger=0)
+        # Sleep long enough to debounce switch
         sleep_ms(300)
+
         if button.value() == 1:
             self.watering_system.enable_waterpump()
             while button.value() == 1:
@@ -159,11 +166,24 @@ class main:
                    handler=lambda t: self.watering_interrupt(button))
 
     def get_battery_voltage(self) -> float:
+        """Reads the divided battery input and converts it into volts
+
+        Returns:
+            float: Rough battery voltage
+        """
+
         raw_value = self.battery_voltage.read_u16()
         voltage = (raw_value * (3.3 / 65536)) * 2
         return voltage
 
     async def serveClient(self, reader, writer):
+        """Asynchronously respond to http requests for the webserver
+
+        Args:
+            reader : Reads http requests
+            writer : Responds to http requests
+        """
+
         page = self.connection.get_webpage("index.html")
 
         print("client connected")
@@ -178,6 +198,8 @@ class main:
         watering_on = request.find("/state=1")
         watering_off = request.find("/state=0")
         settings_changed = request.find("threshold=")
+
+        # Replace placeholders with up to date values
         response = response.replace(
             "moistureValue", str(self.watering_system.moisture_average))
         response = response.replace(
@@ -213,6 +235,10 @@ class main:
         print("client disconnecting")
 
     async def main(self):
+        """Main loop containing logic to control when to read sensors and responding to their outputs
+        """
+
+        # Webserver is only used when on mains power
         connection_status = ""
         if self.usb_power_flag == 0:
             self.connection.connect()
@@ -249,18 +275,10 @@ class main:
             if self.usb_power_flag == 0:
                 await uasyncio.sleep(self.sleep_duration)
             else:
-                sleep(self.sleep_duration)
-            # for i in range(1000):
-            #     lightsleep(2)
-            # sleep(1)
+                # Lightsleep lowers power consumption but has RAM and state retention
+                lightsleep(self.sleep_duration)
+                # sleep(self.sleep_duration)
 
 
 main_instance = main()
 uasyncio.run(main_instance.main())
-# uasyncio.new_event_loop()
-
-# try:
-#     uasyncio.run(main_instance.main())
-# finally:
-#     uasyncio.new_event_loop()
-#     print("BAD")
