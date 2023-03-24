@@ -56,6 +56,7 @@ class main:
         self.battery_voltage = ADC(27)
         self.button = Pin(6, Pin.IN, Pin.PULL_DOWN)
         self.timer = Timer(-1)
+        self.timer_b = Timer(-1)
 
         self.manual_watering_flag = False
         self.disable_watering_flag = False
@@ -256,13 +257,15 @@ class main:
 
             if (self.watering_system.moisture_average < self.watering_threshold) and (not self.disable_watering_flag):
                 self.neopixel_stick.fill((255, 0, 0), 0.05)
-                self.watering_system.watering_cycle()
+                self.watering_system.enable_waterpump()
+                self.timer_b.init(period=60000, mode=Timer.ONE_SHOT,
+                                  callback=lambda t: self.watering_system.disable_waterpump())
+
                 if self.low_battery_flag:
                     self.neopixel_stick.fill((255, 0, 0), 0.05)
                 else:
                     self.neopixel_stick.fill((0, 0, 0), 0.05)
                 self.disable_watering()
-                print("watering finished", self.disable_watering_flag)
 
             if not self.usb_power_flag:
                 if not self.low_battery_flag:
@@ -275,9 +278,9 @@ class main:
             if self.usb_power_flag == 0:
                 await uasyncio.sleep(self.sleep_duration)
             else:
-                # Lightsleep lowers power consumption but has RAM and state retention
+                # Lightsleep lowers power consumption but has RAM and
+                # state retention
                 lightsleep(self.sleep_duration)
-                # sleep(self.sleep_duration)
 
 
 main_instance = main()
