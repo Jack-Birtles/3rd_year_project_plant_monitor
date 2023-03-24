@@ -2,7 +2,8 @@
 # Last updated 23/03/23
 #
 # A micropython driver for an array of WS2812 LEDs.
-# Based on the driver included in later versions of micropython:
+# I did not write most of the code here, instead extracting functionality I
+# require from the driver included in later versions of micropython:
 # https://docs.micropython.org/en/latest/library/neopixel.html?highlight=neopixel#module-neopixel
 
 import array
@@ -29,7 +30,7 @@ def ws2812():
 class Neopixel_Controller:
     """
     Simple controller to instantiate a statemachine to interface with the
-    LEDs and set them to a single colour
+    LED array and set them all to a single colour
 
     Attributes:
         led_count (int): number of LEDs in the array

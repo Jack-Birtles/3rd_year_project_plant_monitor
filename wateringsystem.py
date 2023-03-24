@@ -84,8 +84,12 @@ class WateringSystem:
         """
         average = 0
         for i, j in enumerate(values):
+            # Selects the correct set of weights depending on the amount of
+            # values provided before applying the weight
             average = average + (j * weights[len(values) - 1][i])
 
+        # convert the moisture from the ADC value and store the average as
+        # a percentage
         if is_moisture:
             average = round((const_air_val - average) * 100 /
                             (const_air_val - const_water_val), 1)
